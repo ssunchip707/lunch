@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>급식 메뉴 설문</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --bg:#FFFFFF; --fill:#F2F4F6; --fill-2:#F9FAFB; --ink:#191F28; --ink-2:#4E5968; --ink-3:#8B95A1; --ink-4:#B0B8C1; --line:#E5E8EB;
+    --blue:#3182F6; --blue-press:#1B64DA; --blue-soft:#E8F3FF; --green:#14A96B; --green-soft:#E5F8EF; --red:#F04452;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    -webkit-font-smoothing:antialiased;word-break:keep-all;letter-spacing:-.01em}
+  button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,background .15s,color .15s}
+  button:active{transform:scale(.97)}
+  .wrap{max-width:560px;margin:0 auto;padding:0 20px 96px}
+
+  header.top{display:flex;align-items:center;gap:8px;height:56px;position:sticky;top:0;background:rgba(255,255,255,.92);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:15;margin:0 -20px;padding:0 20px}
+  .logo{width:30px;height:30px;border-radius:9px;border:0;background:var(--blue);display:grid;place-items:center;flex:none;padding:0}
+  .logo svg{width:20px;height:20px}
+  .appname{font-size:16px;font-weight:700}
+  .auth{margin-left:auto;display:flex;align-items:center;gap:4px}
+  .chip{border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+  .chip.primary{color:var(--blue)}
+  #meChip{background:var(--fill);color:var(--ink)}
+
+  .hero{padding:20px 0 24px}
+  .hero h1{font-size:28px;line-height:1.32;margin:0;font-weight:800;letter-spacing:-.03em}
+  .hero p{margin:8px 0 0;font-size:15px;color:var(--ink-3)}
+
+  .demo{background:var(--fill);color:var(--ink-2);border-radius:16px;padding:14px 16px;font-size:13px;margin-bottom:20px;line-height:1.6}
+  .demo code{font-size:12px}
+
+  .tbar{position:sticky;top:56px;z-index:14;margin:0 -20px 16px;padding:12px 20px;background:var(--ink);color:#fff;display:none;align-items:center;gap:6px}
+  body.teacher .tbar{display:flex}
+  .tbar b{font-size:14px;margin-right:auto;white-space:nowrap}
+  .tbar button{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600;white-space:nowrap}
+  .tbar button.danger{background:var(--red)}
+
+  section.card-box{margin-bottom:40px}
+  .sec-title{display:flex;align-items:baseline;gap:8px;margin:0 0 14px}
+  .sec-title h2{font-size:20px;margin:0;font-weight:800;letter-spacing:-.02em}
+  .sec-title span{font-size:15px;color:var(--blue);font-weight:700}
+
+  /* ---- 4찬 식판 (플랫) ---- */
+  .tray{background:var(--fill);border-radius:26px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .tray .row{display:flex;gap:8px}
+  .tray .top{min-height:92px}
+  .tray .bottom{min-height:132px}
+  .slot,.pair{background:#fff}
+  .slot{border:0;border-radius:18px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;min-width:0;flex:1}
+  .pair{flex:2;display:flex;border-radius:18px;min-width:0}
+  .pair .slot{background:transparent}
+  .pair .divider{width:1px;flex:none;margin:16px 0;background:var(--line)}
+  .s-rice{flex:1.35}
+  .s-soup{flex:1;border-radius:50%}
+  .slot .lbl{font-size:12px;color:var(--ink-3);font-weight:600}
+  .slot .val{font-size:15px;font-weight:700;line-height:1.3;margin-top:4px;overflow-wrap:anywhere;color:var(--ink)}
+  .slot .val:empty::before{content:"+";display:block;font-size:22px;font-weight:400;color:var(--ink-4);line-height:1}
+  .slot.filled .lbl{color:var(--blue)}
+  button.slot:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+
+  .tray.mini{border-radius:20px;padding:6px;gap:5px;margin-top:12px}
+  .tray.mini .row{gap:5px}
+  .tray.mini .top{min-height:52px}
+  .tray.mini .bottom{min-height:68px}
+  .tray.mini .slot,.tray.mini .pair{border-radius:14px}
+  .tray.mini .s-soup{border-radius:50%}
+  .tray.mini .pair .divider{margin:10px 0}
+  .tray.mini .slot{padding:5px 3px}
+  .tray.mini .lbl{font-size:10px;color:var(--ink-4)}
+  .tray.mini .val{font-size:13px;margin-top:2px}
+  .tray.mini .val:empty::before{content:"–";font-size:13px}
+
+  .field{margin-top:12px}
+  .field input,.field select,.field textarea{width:100%;border:0;border-radius:14px;padding:15px 16px;background:var(--fill);outline:none;font-size:15px;
+    -webkit-appearance:none;appearance:none}
+  .field input::placeholder{color:var(--ink-4)}
+  .field input:focus,.field select:focus{box-shadow:inset 0 0 0 2px var(--blue);background:#fff}
+  .btn{border:0;border-radius:16px;height:56px;font-weight:700;font-size:16px;background:var(--blue);color:#fff;width:100%;margin-top:12px}
+  .btn:hover{background:var(--blue-press)}
+  .btn:disabled{background:var(--ink-4);cursor:default;transform:none}
+  .btn.ghost{background:var(--fill);color:var(--ink-2);height:52px;margin-top:8px}
+  .hint{font-size:13px;color:var(--ink-3);margin-top:12px;line-height:1.6;text-align:center}
+
+  .tabs{display:flex;gap:8px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:none;border:0;background:var(--fill);border-radius:999px;padding:9px 15px;font-size:14px;font-weight:600;color:var(--ink-2)}
+  .tabs button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .datebar{display:none;align-items:center;gap:8px;margin:8px 0}
+  .datebar.on{display:flex}
+  .datebar input{flex:1;border:0;border-radius:12px;padding:10px 12px;background:var(--fill);text-align:center;font-weight:600}
+  .datebar button{border:0;background:var(--fill);border-radius:12px;width:42px;height:42px;font-size:18px;color:var(--ink-2)}
+
+  .post{padding:20px 0;border-bottom:1px solid var(--fill)}
+  .post:last-child{border-bottom:0}
+  .meta{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-3);flex-wrap:wrap}
+  .who{font-weight:700;color:var(--ink);font-size:15px}
+  .rank{font-weight:800;font-size:15px;color:var(--blue);min-width:24px}
+  .badge{font-size:12px;font-weight:700;padding:4px 8px;border-radius:8px}
+  .badge.ok{background:var(--green-soft);color:var(--green)}
+  .badge.me{background:var(--blue-soft);color:var(--blue)}
+  .comment{font-size:15px;margin:12px 0 0;color:var(--ink-2);line-height:1.55}
+  .actions{display:flex;align-items:center;gap:6px;margin-top:12px}
+  .like{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--fill);border-radius:12px;padding:9px 14px;font-weight:700;font-size:14px;color:var(--ink-2)}
+  .like[aria-pressed="true"]{background:var(--blue-soft);color:var(--blue)}
+  .like:disabled{transform:none;cursor:default}
+  .like svg{width:16px;height:16px}
+  .actions .spacer{flex:1}
+  .small{border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:600;color:var(--ink-3)}
+  .small.t{background:var(--blue-soft);color:var(--blue)}
+  .empty{text-align:center;color:var(--ink-3);padding:56px 0;font-size:15px}
+
+  /* 바텀시트 */
+  dialog{border:0;padding:28px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:520px;margin:auto auto 0;
+    border-radius:28px 28px 0 0;background:#fff;color:var(--ink)}
+  dialog[open]{animation:sheet .32s cubic-bezier(.2,.9,.25,1)}
+  @keyframes sheet{from{transform:translateY(100%)}}
+  dialog::backdrop{background:rgba(0,0,0,.4);animation:fade .2s}
+  @keyframes fade{from{opacity:0}}
+  @media (min-width:700px){dialog{margin:auto;border-radius:28px;padding-bottom:24px}dialog[open]{animation:pop .2s ease-out}@keyframes pop{from{opacity:0;transform:scale(.96)}}}
+  dialog h3{margin:0 0 6px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  dialog .sub{margin:0 0 10px;font-size:15px;color:var(--ink-3);line-height:1.55}
+  .login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border-radius:16px;height:54px;margin-top:10px;font-weight:700;font-size:15px;border:0}
+  .login-btn.google{background:var(--fill)}
+  .login-btn.kakao{background:#FEE500;color:#191600}
+  .login-btn.naver{background:#03C75A;color:#fff}
+  .login-btn i{font-style:normal;font-weight:900;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;font-size:13px}
+  .login-btn.google i{color:#4285F4;background:#fff}
+  .login-btn.kakao i{background:#191600;color:#FEE500}
+  .login-btn.naver i{background:#fff;color:#03C75A}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  label.l{display:block;font-size:13px;font-weight:600;color:var(--ink-3);margin-bottom:6px}
+  .err{color:var(--red);font-size:14px;min-height:20px;margin-top:10px}
+  .shake{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .sugg{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .sugg button{border:0;background:var(--fill);border-radius:12px;padding:9px 13px;font-size:14px;font-weight:600;color:var(--ink-2)}
+
+  .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:14px 18px;border-radius:16px;
+    font-size:15px;font-weight:600;opacity:0;pointer-events:none;transition:.25s cubic-bezier(.2,.9,.25,1);z-index:50;max-width:calc(100vw - 40px)}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* 하단 탭바 */
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  nav.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+  nav.tabbar button{flex:1;max-width:200px;border:0;background:transparent;height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    font-size:12px;font-weight:600;color:var(--ink-4);position:relative}
+  nav.tabbar button svg{width:24px;height:24px}
+  nav.tabbar button[aria-current="page"]{color:var(--ink)}
+  nav.tabbar .dot{position:absolute;top:10px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+  .tbar .menu-only{display:inline-block}
+  body.v-qna .tbar .menu-only{display:none}
+
+  /* 문의 */
+  .field textarea{resize:none;line-height:1.55;min-height:120px}
+  .field textarea:focus{box-shadow:inset 0 0 0 2px var(--blue);background:#fff}
+  .qlen{text-align:right;font-size:12px;color:var(--ink-4);margin-top:6px}
+  .q{padding:20px 0;border-bottom:1px solid var(--fill)}
+  .q:last-child{border-bottom:0}
+  .q .qbody{font-size:15px;line-height:1.6;margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .badge.wait{background:#FFF3E0;color:#E07800}
+  .badge.done{background:var(--blue-soft);color:var(--blue)}
+  .answer{background:var(--fill);border-radius:16px;padding:14px 16px;margin-top:12px}
+  .answer b{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--blue)}
+  .answer p{margin:6px 0 0;font-size:15px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+  .answer time{display:block;margin-top:8px;font-size:12px;color:var(--ink-3)}
+  .q .field textarea{min-height:90px}
+  .loginbox{text-align:center;padding:40px 0;color:var(--ink-3);font-size:15px}
+  .loginbox .btn{width:auto;padding:0 24px;height:48px;margin-top:14px}
+  footer{text-align:center;font-size:13px;color:var(--ink-4);margin-top:32px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <button class="logo" id="logo" aria-label="급식 설문">
+      <svg viewBox="0 0 32 32" fill="none"><rect x="2" y="6" width="28" height="20" rx="5" fill="#fff"/>
+        <rect x="5" y="9" width="4.5" height="5" rx="1.5" fill="#A9CBFB"/><rect x="11" y="9" width="10" height="5" rx="1.5" fill="#A9CBFB"/>
+        <rect x="22.5" y="9" width="4.5" height="5" rx="1.5" fill="#A9CBFB"/><rect x="5" y="16" width="11" height="7" rx="2" fill="#A9CBFB"/>
+        <circle cx="22.5" cy="19.5" r="4" fill="#A9CBFB"/></svg>
+    </button>
+    <span class="appname">급식 설문</span>
+    <div class="auth" id="auth"></div>
+  </header>
+  <div class="tbar" id="tbar">
+    <b>선생님 모드</b>
+    <button id="tResetSoft" class="menu-only">채택 외 초기화</button>
+    <button id="tResetAll" class="danger menu-only">전체 초기화</button>
+    <button id="tExit">나가기</button>
+  </div>
+  <main id="viewMenu">
+  <div class="hero"><h1>오늘 급식,<br>뭐 먹고 싶어요?</h1><p>식판 칸을 눌러 먹고 싶은 메뉴를 담아 보세요</p></div>
+
+  <div class="demo" id="demoNote" hidden>
+    <b>미리보기 모드</b> — 데이터가 이 기기에만 저장돼요. <code>index.html</code> 위쪽 CONFIG에 Supabase 주소와 키를 넣으면 모두에게 공유되고 실제 구글·카카오·네이버 로그인이 켜집니다.
+  </div>
+
+  <section class="card-box" id="composer">
+    <div class="tray" id="composeTray"></div>
+    <div class="field"><input id="comment" maxlength="100" placeholder="한마디 남기기 (선택)"></div>
+    <button class="btn" id="submitBtn">메뉴 올리기</button>
+    <p class="hint">올리기와 추천은 로그인한 학생만 할 수 있어요. 친구들에게는 이름 없이 <b>학년</b>만 보여요.</p>
+  </section>
+
+  <div class="sec-title"><h2>모두의 급식 메뉴</h2><span id="count"></span></div>
+  <div class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="likes" aria-selected="true">추천순</button>
+    <button role="tab" data-tab="recent" aria-selected="false">최신순</button>
+    <button role="tab" data-tab="date" aria-selected="false">날짜별</button>
+    <button role="tab" data-tab="adopted" aria-selected="false">채택됨</button>
+  </div>
+  <div class="datebar" id="datebar">
+    <button id="prevDay" aria-label="이전 날">‹</button>
+    <input type="date" id="dateInput">
+    <button id="nextDay" aria-label="다음 날">›</button>
+  </div>
+  <div id="list"></div>
+  </main>
+
+  <main id="viewQna" hidden>
+    <div class="hero"><h1 id="qHeroTitle">궁금한 점이<br>있나요?</h1><p id="qHeroSub">급식에 대해 문의하면 선생님이 직접 답변해 드려요</p></div>
+    <section class="card-box" id="askBox">
+      <div class="field"><textarea id="qBody" maxlength="500" placeholder="예: 메뉴에 알레르기 표시를 같이 해 주실 수 있나요?"></textarea></div>
+      <div class="qlen"><span id="qLen">0</span>/500</div>
+      <button class="btn" id="qSend">문의 보내기</button>
+      <p class="hint">문의 내용은 <b>나와 선생님만</b> 볼 수 있어요.</p>
+    </section>
+    <div class="sec-title"><h2 id="qListTitle">내 문의</h2><span id="qCount"></span></div>
+    <div class="tabs" id="qTabs" hidden>
+      <button data-q="wait" aria-selected="true">답변 대기</button>
+      <button data-q="all" aria-selected="false">전체</button>
+    </div>
+    <div id="qList"></div>
+  </main>
+  <footer>급식 메뉴 설문 · 학생 정보는 선생님만 볼 수 있어요</footer>
+</div>
+
+<!-- 로그인 -->
+<dialog id="loginDlg">
+  <h3>로그인하고 참여하기</h3>
+  <p class="sub">메뉴를 올리거나 추천하려면 내 계정으로 로그인해 주세요.</p>
+  <button class="login-btn google" data-provider="google"><i>G</i>구글로 로그인</button>
+  <button class="login-btn kakao" data-provider="kakao"><i>K</i>카카오로 로그인</button>
+  <button class="login-btn naver" data-provider="naver"><i>N</i>네이버로 로그인</button>
+  <button class="btn ghost" data-close>닫기</button>
+</dialog>
+
+<!-- 학생 정보 -->
+<dialog id="profileDlg">
+  <h3>학생 정보 입력</h3>
+  <p class="sub">이름과 반·번호는 <b>선생님만</b> 볼 수 있어요. 친구들에게는 “N학년 학생”으로만 보여요.</p>
+  <div class="row3">
+    <div class="field"><label class="l" for="pGrade">학년</label>
+      <select id="pGrade"><option value="">선택</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+    <div class="field"><label class="l" for="pClass">반</label><input id="pClass" type="number" inputmode="numeric" min="1" max="30" placeholder="3"></div>
+    <div class="field"><label class="l" for="pNo">번호</label><input id="pNo" type="number" inputmode="numeric" min="1" max="60" placeholder="12"></div>
+  </div>
+  <div class="field"><label class="l" for="pName">이름</label><input id="pName" maxlength="20" placeholder="홍길동" autocomplete="name"></div>
+  <div class="err" id="pErr"></div>
+  <button class="btn" id="pSave">저장하기</button>
+  <button class="btn ghost" id="pLogout">다른 계정으로 로그인</button>
+</dialog>
+
+<!-- 식판 칸 입력 -->
+<dialog id="slotDlg">
+  <h3 id="slotTitle">메뉴</h3>
+  <div class="field"><input id="slotInput" maxlength="30" placeholder=""></div>
+  <div class="sugg" id="slotSugg"></div>
+  <button class="btn" id="slotOk">식판에 담기</button>
+  <button class="btn ghost" id="slotClear">비우기</button>
+</dialog>
+
+<!-- 선생님 -->
+<dialog id="teacherDlg">
+  <h3>선생님 확인</h3>
+  <p class="sub">비밀번호를 입력하면 학생 이름 확인, 채택, 초기화, 문의 답변을 할 수 있어요.</p>
+  <div class="field"><input id="tPw" type="password" autocomplete="off" placeholder="비밀번호"></div>
+  <div class="err" id="tErr"></div>
+  <button class="btn" id="tOk">들어가기</button>
+  <button class="btn ghost" data-close>취소</button>
+</dialog>
+
+<nav class="tabbar" aria-label="메뉴">
+  <button data-view="menu" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="5" width="19" height="14" rx="3.5"/><path d="M6 8.5h2.5M11 8.5h2M15.5 8.5H18M6 12.5h5v3H6zM17 14a2 2 0 1 1-.01 0"/></svg>급식 메뉴</button>
+  <button data-view="qna">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/><path d="M10 7.8a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.4M12 13h.01"/></svg>문의하기<span class="dot" id="qDot" hidden></span></button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   설정: Supabase 프로젝트를 만든 뒤 아래 두 값을 채우세요.
+   비워 두면 이 기기에서만 동작하는 '미리보기 모드'로 실행됩니다.
+   ========================================================= */
+const CONFIG = {
+  SUPABASE_URL: 'https://ygdthdqkqkfewgptavny.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_uZ-Tmna5KdZeCXJWN3jDSg_UIhOPBh7',
+  NAVER_PROVIDER: 'custom:naver',  // Supabase에 만든 네이버 커스텀 제공자 ID
+  SHOW_NAVER: true,
+};
+
+const SLOTS = [
+  { key:'side1',   label:'반찬 1',   ph:'예: 계란말이',   sugg:['계란말이','김치','콘샐러드','어묵볶음','감자조림'] },
+  { key:'main',    label:'메인 반찬', ph:'예: 돈가스',     sugg:['돈가스','제육볶음','치킨까스','떡갈비','닭강정','탕수육'] },
+  { key:'side2',   label:'반찬 2',   ph:'예: 시금치나물', sugg:['시금치나물','깍두기','소시지볶음','잡채','떡볶이'] },
+  { key:'dessert', label:'후식',     ph:'예: 요구르트',   sugg:['요구르트','과일','아이스크림','푸딩','식혜'] },
+  { key:'rice',    label:'밥',       ph:'예: 카레라이스', sugg:['흰쌀밥','카레라이스','볶음밥','짜장밥','오므라이스'] },
+  { key:'soup',    label:'국',       ph:'예: 미역국',     sugg:['미역국','된장국','김치찌개','어묵국','짬뽕국'] },
+];
+
+/* ---------- 공통 유틸 ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const seoulDate = d => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul'}).format(d);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} },
+};
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('on'),2200); }
+function ago(iso){
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 60) return '방금';
+  if (s < 3600) return Math.floor(s/60)+'분 전';
+  if (s < 86400) return Math.floor(s/3600)+'시간 전';
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric'}).format(d);
+}
+async function sha256(s){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+/* ---------- 실제 서버(Supabase) ---------- */
+async function makeLiveBackend(){
+  const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+  const sb = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  const ok = ({data, error}) => { if (error) throw new Error(error.message); return data; };
+  const rpc = async (fn, args) => ok(await sb.rpc(fn, args));
+  const opts = o => ({ p_sort:o.sort, p_date:o.date || null, p_adopted_only:!!o.adopted });
+  return {
+    live: true,
+    async getUser(){ const { data:{ session } } = await sb.auth.getSession(); return session ? { id: session.user.id } : null; },
+    onAuthChange(cb){ sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') cb(); }); },
+    async signIn(provider){
+      const p = provider === 'naver' ? CONFIG.NAVER_PROVIDER : provider;
+      ok(await sb.auth.signInWithOAuth({ provider: p, options: { redirectTo: location.origin + location.pathname } }));
+    },
+    async signOut(){ await sb.auth.signOut(); },
+    async getProfile(){
+      const u = await this.getUser(); if (!u) return null;
+      return ok(await sb.from('profiles').select('grade,class_no,student_no,name').eq('id', u.id).maybeSingle());
+    },
+    async saveProfile(p){ const u = await this.getUser(); ok(await sb.from('profiles').upsert({ id: u.id, ...p })); },
+    listPosts: o => rpc('list_posts', opts(o)),
+    createPost: m => rpc('create_post', { p_rice:m.rice, p_soup:m.soup, p_main:m.main, p_side1:m.side1, p_side2:m.side2, p_dessert:m.dessert, p_comment:m.comment }),
+    toggleLike: id => rpc('toggle_like', { p_post: id }),
+    deleteMine: id => rpc('delete_my_post', { p_post: id }),
+    teacherLogin: pw => rpc('teacher_login', { pw }),
+    teacherList: (pw, o) => rpc('teacher_list_posts', { pw, ...opts(o) }),
+    teacherAdopt: (pw, id, v) => rpc('teacher_set_adopted', { pw, p_post:id, p_value:v }),
+    teacherDelete: (pw, id) => rpc('teacher_delete_post', { pw, p_post:id }),
+    teacherReset: (pw, keep) => rpc('teacher_reset', { pw, p_keep_adopted: keep }),
+    createInquiry: body => rpc('create_inquiry', { p_body: body }),
+    myInquiries: () => rpc('my_inquiries'),
+    deleteMyInquiry: id => rpc('delete_my_inquiry', { p_id: id }),
+    teacherInquiries: (pw, waitOnly) => rpc('teacher_list_inquiries', { pw, p_unanswered_only: waitOnly }),
+    teacherAnswer: (pw, id, answer) => rpc('teacher_answer_inquiry', { pw, p_id: id, p_answer: answer }),
+    teacherDeleteInquiry: (pw, id) => rpc('teacher_delete_inquiry', { pw, p_id: id }),
+  };
+}
+
+/* ---------- 미리보기(이 기기 저장) ---------- */
+function makeDemoBackend(){
+  const KEY = 'lunch-demo-v1';
+  const TEACHER_HASH = '5135b2b135b8132a5cc40147762a1884ba4897f7154f611e712cd4f894e42d27';
+  let db = store.get(KEY, null);
+  if (!db) {
+    const h = n => new Date(Date.now() - n*3600e3).toISOString();
+    db = { seq: 5, session: null, users: {
+        u1:{profile:{grade:2,class_no:3,student_no:12,name:'김하늘'}}, u2:{profile:{grade:1,class_no:5,student_no:7,name:'이도윤'}},
+        u3:{profile:{grade:3,class_no:1,student_no:21,name:'박서아'}}, u4:{profile:{grade:2,class_no:6,student_no:3,name:'최준'}} },
+      likes: [['1','u2'],['1','u3'],['1','u4'],['2','u1'],['2','u3'],['3','u1']].map(([p,u])=>({post:+p,user:u})),
+      posts: [
+        {id:1,user:'u1',rice:'흰쌀밥',soup:'김치찌개',main:'돈가스',side1:'계란말이',side2:'깍두기',dessert:'요구르트',comment:'돈가스 소스 많이 주세요!',adopted:false,created_at:h(3)},
+        {id:2,user:'u2',rice:'카레라이스',soup:'미역국',main:'치킨까스',side1:'콘샐러드',side2:'김치',dessert:'아이스크림',comment:'',adopted:true,created_at:h(28)},
+        {id:3,user:'u3',rice:'볶음밥',soup:'짬뽕국',main:'탕수육',side1:'단무지',side2:'',dessert:'',comment:'중식 데이 해주세요',adopted:false,created_at:h(1)},
+        {id:4,user:'u4',rice:'',soup:'어묵국',main:'떡볶이',side1:'튀김',side2:'순대',dessert:'식혜',comment:'분식 데이!',adopted:false,created_at:h(50)},
+      ]};
+    store.set(KEY, db);
+  }
+  if (!db.inquiries) {
+    db.inquiries = [
+      { id:1, user:'u1', body:'금요일마다 특식 데이를 해 주실 수 있나요?', answer:'좋은 의견이에요! 다음 달부터 마지막 주 금요일에 특식을 준비해 볼게요.', answered_at:new Date(Date.now()-2*3600e3).toISOString(), created_at:new Date(Date.now()-26*3600e3).toISOString() },
+      { id:2, user:'u3', body:'메뉴에 알레르기 표시도 같이 해 주세요.', answer:null, answered_at:null, created_at:new Date(Date.now()-3*3600e3).toISOString() },
+    ];
+    db.qseq = 3;
+  }
+  const save = () => store.set(KEY, db);
+  const count = id => db.likes.filter(l => l.post === id).length;
+  const query = o => {
+    let rows = db.posts.filter(p => (!o.date || seoulDate(new Date(p.created_at)) === o.date) && (!o.adopted || p.adopted));
+    rows = rows.map(p => ({ ...p, like_count: count(p.id) }));
+    rows.sort((a,b) => (o.sort === 'likes' ? b.like_count - a.like_count : 0) || (new Date(b.created_at) - new Date(a.created_at)));
+    return rows;
+  };
+  const isT = async pw => (await sha256(pw || '')) === TEACHER_HASH;
+  const need = () => { if (!db.session) throw new Error('로그인이 필요해요'); if (!db.users[db.session]?.profile) throw new Error('학생 정보를 먼저 입력해 주세요'); };
+  let authCb = () => {};
+  return {
+    live: false,
+    async getUser(){ return db.session ? { id: db.session } : null; },
+    onAuthChange(cb){ authCb = cb; },
+    async signIn(provider){ const id = provider + '-' + Math.random().toString(36).slice(2,8); db.users[id] = { provider }; db.session = id; save(); authCb(); },
+    async signOut(){ db.session = null; save(); authCb(); },
+    async getProfile(){ return db.session ? db.users[db.session]?.profile || null : null; },
+    async saveProfile(p){ db.users[db.session].profile = p; save(); },
+    async listPosts(o){
+      return query(o).map(p => { const pr = db.users[p.user]?.profile;
+        return { id:p.id, grade:pr?.grade ?? null, rice:p.rice, soup:p.soup, main:p.main, side1:p.side1, side2:p.side2, dessert:p.dessert,
+          comment:p.comment, like_count:p.like_count, adopted:p.adopted, created_at:p.created_at,
+          liked_by_me: db.likes.some(l => l.post === p.id && l.user === db.session), is_mine: p.user === db.session }; });
+    },
+    async createPost(m){
+      need();
+      const clean = Object.fromEntries(Object.entries(m).map(([k,v]) => [k, (v||'').trim()]));
+      if (!SLOTS.some(s => clean[s.key])) throw new Error('식판에 메뉴를 하나 이상 적어 주세요');
+      const today = db.posts.filter(p => p.user === db.session && Date.now() - new Date(p.created_at) < 86400e3).length;
+      if (today >= 5) throw new Error('하루에 5개까지만 올릴 수 있어요');
+      db.posts.push({ id: db.seq++, user: db.session, ...clean, adopted:false, created_at: new Date().toISOString() }); save();
+    },
+    async toggleLike(id){
+      need();
+      if (db.posts.find(p => p.id === id)?.user === db.session) throw new Error('내 메뉴에는 추천할 수 없어요');
+      const i = db.likes.findIndex(l => l.post === id && l.user === db.session);
+      if (i >= 0) db.likes.splice(i,1); else db.likes.push({ post:id, user:db.session });
+      save(); return { liked: i < 0, like_count: count(id) };
+    },
+    async deleteMine(id){
+      const p = db.posts.find(p => p.id === id);
+      if (!p || p.user !== db.session || p.adopted) throw new Error('삭제할 수 없는 게시물이에요');
+      db.posts = db.posts.filter(x => x.id !== id); db.likes = db.likes.filter(l => l.post !== id); save();
+    },
+    async teacherLogin(pw){ const ok = await isT(pw); if (!ok) await new Promise(r => setTimeout(r, 700)); return ok; },
+    async teacherList(pw, o){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      return query(o).map(p => ({ ...p, ...(db.users[p.user]?.profile || {}) }));
+    },
+    async teacherAdopt(pw, id, v){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.posts.find(p => p.id === id).adopted = v; save(); },
+    async teacherDelete(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.posts = db.posts.filter(p => p.id !== id); db.likes = db.likes.filter(l => l.post !== id); save(); },
+    async teacherReset(pw, keep){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      const before = db.posts.length; db.posts = db.posts.filter(p => keep && p.adopted);
+      const ids = new Set(db.posts.map(p => p.id)); db.likes = db.likes.filter(l => ids.has(l.post)); save();
+      return before - db.posts.length;
+    },
+    async createInquiry(body){
+      need(); body = (body || '').trim();
+      if (!body) throw new Error('문의 내용을 적어 주세요');
+      db.inquiries.push({ id: db.qseq++, user: db.session, body, answer:null, answered_at:null, created_at:new Date().toISOString() }); save();
+    },
+    async myInquiries(){
+      return db.inquiries.filter(q => q.user === db.session).sort((a,b) => new Date(b.created_at) - new Date(a.created_at))
+        .map(({ id, body, answer, answered_at, created_at }) => ({ id, body, answer, answered_at, created_at }));
+    },
+    async deleteMyInquiry(id){
+      const q = db.inquiries.find(q => q.id === id);
+      if (!q || q.user !== db.session || q.answer) throw new Error('삭제할 수 없는 문의예요 (답변이 달린 문의는 지울 수 없어요)');
+      db.inquiries = db.inquiries.filter(x => x.id !== id); save();
+    },
+    async teacherInquiries(pw, waitOnly){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      return db.inquiries.filter(q => !waitOnly || !q.answer)
+        .sort((a,b) => (!b.answer - !a.answer) || (new Date(b.created_at) - new Date(a.created_at)))
+        .map(q => ({ ...q, ...(db.users[q.user]?.profile || {}) }));
+    },
+    async teacherAnswer(pw, id, answer){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      const q = db.inquiries.find(q => q.id === id); answer = (answer || '').trim() || null;
+      q.answer = answer; q.answered_at = answer ? new Date().toISOString() : null; save();
+    },
+    async teacherDeleteInquiry(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.inquiries = db.inquiries.filter(q => q.id !== id); save(); },
+  };
+}
+
+/* ---------- 앱 ---------- */
+let api;
+const state = { view:'menu', qTab:'wait', inquiries:[], user:null, profile:null, tab:'likes', date: seoulDate(new Date()), teacherPw:null, posts:[],
+  draft: store.get('lunch-draft', {}) };
+
+function trayHTML(m, interactive){
+  const one = key => {
+    const sl = SLOTS.find(s => s.key === key), v = m[key] || '';
+    const tag = interactive ? 'button' : 'div';
+    const attrs = interactive ? `type="button" data-slot="${key}" aria-label="${sl.label}${v ? ': '+esc(v) : ' 비어 있음'}"` : '';
+    return `<${tag} class="slot s-${key}${v ? ' filled' : ''}" ${attrs}><span class="lbl">${sl.label}</span><span class="val">${esc(v)}</span></${tag}>`;
+  };
+  return `<div class="row top">${one('side1')}<div class="pair">${one('main')}<i class="divider"></i>${one('side2')}</div>${one('dessert')}</div>
+    <div class="row bottom">${one('rice')}${one('soup')}</div>`;
+}
+function renderComposer(){ $('#composeTray').innerHTML = trayHTML(state.draft, true); $('#comment').value = state.draft.comment || ''; }
+function saveDraft(){ store.set('lunch-draft', state.draft); }
+
+function renderAuth(){
+  const el = $('#auth');
+  if (!state.user) { el.innerHTML = `<button class="chip primary" id="loginChip">로그인</button>`; $('#loginChip').onclick = () => $('#loginDlg').showModal(); return; }
+  const label = state.profile ? `${state.profile.grade}학년 ${state.profile.class_no}반` : '정보 입력';
+  el.innerHTML = `<button class="chip" id="meChip">${label}</button><button class="chip" id="outChip">로그아웃</button>`;
+  $('#meChip').onclick = openProfile;
+  $('#outChip').onclick = async () => { await api.signOut(); toast('로그아웃했어요'); };
+}
+
+async function refreshUser(){
+  state.user = await api.getUser();
+  state.profile = state.user ? await api.getProfile().catch(() => null) : null;
+  renderAuth();
+  if (state.user && !state.profile) openProfile();
+}
+
+function requireStudent(){
+  if (!state.user) { $('#loginDlg').showModal(); return false; }
+  if (!state.profile) { openProfile(); return false; }
+  return true;
+}
+
+function listOpts(){
+  return { likes:{sort:'likes'}, recent:{sort:'recent'}, date:{sort:'likes', date:state.date}, adopted:{sort:'recent', adopted:true} }[state.tab];
+}
+
+async function load(){
+  try {
+    state.posts = state.teacherPw ? await api.teacherList(state.teacherPw, listOpts()) : await api.listPosts(listOpts());
+  } catch (e) { toast(e.message); state.posts = []; }
+  renderList();
+}
+
+function renderList(){
+  const T = !!state.teacherPw;
+  $('#count').textContent = state.posts.length ? `${state.posts.length}` : '';
+  if (!state.posts.length) {
+    $('#list').innerHTML = `<div class="empty">${state.tab === 'adopted' ? '아직 채택된 메뉴가 없어요' : state.tab === 'date' ? '이 날 올라온 메뉴가 없어요' : '첫 번째 급식 메뉴를 올려 보세요!'}</div>`;
+    return;
+  }
+  const heart = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21h3V9H2v12Zm19-11a2 2 0 0 0-2-2h-6.3l1-4.6v-.3a1.5 1.5 0 0 0-.4-1L12.2 1 6.6 6.6A2 2 0 0 0 6 8v11a2 2 0 0 0 2 2h9a2 2 0 0 0 1.8-1.2l3-7.1c.1-.2.2-.5.2-.7v-2Z"/></svg>`;
+  $('#list').innerHTML = state.posts.map((p, i) => {
+    const who = T ? (p.name ? `${p.grade}학년 ${p.class_no}반 ${p.student_no}번 ${esc(p.name)}` : '정보 없음')
+                  : (p.grade ? `${p.grade}학년 학생` : '익명');
+    const rank = state.tab === 'likes' && i < 3 && p.like_count > 0 ? `<span class="rank">${i+1}</span>` : '';
+    return `<article class="post${p.adopted ? ' adopted' : ''}" data-id="${p.id}">
+      <div class="meta">${rank}<span class="who">${who}</span><span>· ${ago(p.created_at)}</span>
+        ${p.adopted ? '<span class="badge ok">🏅 채택</span>' : ''}${p.is_mine ? '<span class="badge me">내 메뉴</span>' : ''}</div>
+      <div class="tray mini">${trayHTML(p, false)}</div>
+      ${p.comment ? `<p class="comment">“${esc(p.comment)}”</p>` : ''}
+      <div class="actions">
+        <button class="like" data-act="like" aria-pressed="${!!p.liked_by_me}" ${T ? 'disabled' : ''}>${heart}추천 ${p.like_count}</button>
+        <span class="spacer"></span>
+        ${!T && p.is_mine && !p.adopted ? '<button class="small" data-act="del">삭제</button>' : ''}
+        ${T ? `<button class="small t" data-act="adopt">${p.adopted ? '채택 취소' : '채택'}</button><button class="small" data-act="tdel">삭제</button>` : ''}
+      </div></article>`;
+  }).join('');
+}
+
+/* ---------- 식판 칸 입력 ---------- */
+let editing = null;
+function openSlot(key){
+  editing = SLOTS.find(s => s.key === key);
+  $('#slotTitle').textContent = editing.label;
+  $('#slotInput').placeholder = editing.ph;
+  $('#slotInput').value = state.draft[key] || '';
+  $('#slotSugg').innerHTML = editing.sugg.map(s => `<button type="button">${s}</button>`).join('');
+  $('#slotDlg').showModal();
+  setTimeout(() => $('#slotInput').focus(), 50);
+}
+function commitSlot(v){ state.draft[editing.key] = v.trim(); saveDraft(); renderComposer(); $('#slotDlg').close(); }
+
+/* ---------- 학생 정보 ---------- */
+function openProfile(){
+  const p = state.profile || {};
+  $('#pGrade').value = p.grade || ''; $('#pClass').value = p.class_no || ''; $('#pNo').value = p.student_no || ''; $('#pName').value = p.name || '';
+  $('#pErr').textContent = '';
+  if (!$('#profileDlg').open) $('#profileDlg').showModal();
+}
+
+/* ---------- 이벤트 ---------- */
+/* ---------- 문의하기 ---------- */
+const fmtDate = iso => new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(iso));
+
+function setView(v){
+  state.view = v;
+  $('#viewMenu').hidden = v !== 'menu';
+  $('#viewQna').hidden = v !== 'qna';
+  document.body.classList.toggle('v-qna', v === 'qna');
+  document.querySelectorAll('nav.tabbar [data-view]').forEach(b => b.setAttribute('aria-current', b.dataset.view === v ? 'page' : 'false'));
+  window.scrollTo(0, 0);
+  refresh();
+}
+
+function refresh(){ return state.view === 'qna' ? loadQna() : load(); }
+
+async function loadQna(){
+  const T = !!state.teacherPw;
+  $('#askBox').hidden = T;
+  $('#qTabs').hidden = !T;
+  $('#qHeroTitle').innerHTML = T ? '학생 문의에<br>답변해 주세요' : '궁금한 점이<br>있나요?';
+  $('#qHeroSub').textContent = T ? '답변을 저장하면 학생 화면에 바로 보여요' : '급식에 대해 문의하면 선생님이 직접 답변해 드려요';
+  $('#qListTitle').textContent = T ? '학생 문의' : '내 문의';
+  try {
+    if (T) state.inquiries = await api.teacherInquiries(state.teacherPw, state.qTab === 'wait');
+    else state.inquiries = state.user ? await api.myInquiries() : [];
+  } catch (e) { toast(e.message); state.inquiries = []; }
+  renderQna();
+  updateQDot();
+}
+
+async function updateQDot(){
+  const dot = $('#qDot');
+  if (!state.teacherPw) { dot.hidden = true; return; }
+  try {
+    const n = (await api.teacherInquiries(state.teacherPw, true)).length;
+    dot.textContent = n; dot.hidden = n === 0;
+  } catch { dot.hidden = true; }
+}
+
+function renderQna(){
+  const T = !!state.teacherPw, list = $('#qList');
+  $('#qCount').textContent = state.inquiries.length || '';
+  if (!T && !state.user) {
+    list.innerHTML = `<div class="loginbox">로그인하면 내 문의와 답변을 볼 수 있어요<br><button class="btn" data-qact="login">로그인</button></div>`;
+    return;
+  }
+  if (!state.inquiries.length) {
+    list.innerHTML = `<div class="empty">${T ? (state.qTab === 'wait' ? '답변을 기다리는 문의가 없어요 🎉' : '아직 문의가 없어요') : '아직 남긴 문의가 없어요'}</div>`;
+    return;
+  }
+  list.innerHTML = state.inquiries.map(q => {
+    const status = q.answer ? '<span class="badge done">답변 완료</span>' : '<span class="badge wait">답변 대기</span>';
+    const who = T ? `<span class="who">${q.name ? `${q.grade}학년 ${q.class_no}반 ${q.student_no}번 ${esc(q.name)}` : '정보 없음'}</span>` : '';
+    const head = `<div class="meta">${status}${who}<span>· ${ago(q.created_at)}</span></div><p class="qbody">${esc(q.body)}</p>`;
+    if (T) return `<article class="q" data-id="${q.id}">${head}
+        <div class="field"><textarea maxlength="1000" placeholder="답변을 적어 주세요">${esc(q.answer || '')}</textarea></div>
+        <div class="actions"><button class="small t" data-qact="answer">${q.answer ? '답변 수정' : '답변 저장'}</button><span class="spacer"></span><button class="small" data-qact="tdel">삭제</button></div>
+      </article>`;
+    return `<article class="q" data-id="${q.id}">${head}
+      ${q.answer ? `<div class="answer"><b>선생님 답변</b><p>${esc(q.answer)}</p><time>${fmtDate(q.answered_at)}</time></div>` : ''}
+      ${!q.answer ? '<div class="actions"><span class="spacer"></span><button class="small" data-qact="del">삭제</button></div>' : ''}
+    </article>`;
+  }).join('');
+}
+
+function bind(){
+  document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+  document.querySelectorAll('dialog').forEach(d => d.addEventListener('click', e => { if (e.target === d && d.id !== 'profileDlg') d.close(); }));
+
+  $('#composeTray').onclick = e => { const b = e.target.closest('[data-slot]'); if (b) openSlot(b.dataset.slot); };
+  $('#slotOk').onclick = () => commitSlot($('#slotInput').value);
+  $('#slotClear').onclick = () => commitSlot('');
+  $('#slotInput').onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) commitSlot(e.target.value); };
+  $('#slotSugg').onclick = e => { if (e.target.tagName === 'BUTTON') commitSlot(e.target.textContent); };
+  $('#comment').oninput = e => { state.draft.comment = e.target.value; saveDraft(); };
+
+  $('#submitBtn').onclick = async () => {
+    if (!SLOTS.some(s => (state.draft[s.key] || '').trim())) { toast('식판 칸을 눌러 메뉴를 적어 주세요'); return; }
+    if (!requireStudent()) return;
+    const b = $('#submitBtn'); b.disabled = true;
+    try {
+      await api.createPost(state.draft);
+      state.draft = {}; saveDraft(); renderComposer();
+      toast('급식 메뉴를 올렸어요! 🍱');
+      state.tab = 'recent'; syncTabs(); await load();
+    } catch (e) { toast(e.message); }
+    b.disabled = false;
+  };
+
+  if (!CONFIG.SHOW_NAVER) $('.login-btn.naver').remove();
+  document.querySelectorAll('.login-btn').forEach(b => b.onclick = async () => {
+    try { await api.signIn(b.dataset.provider); $('#loginDlg').close(); } catch (e) { toast('로그인 실패: ' + e.message); }
+  });
+
+  $('#pSave').onclick = async () => {
+    const p = { grade:+$('#pGrade').value, class_no:+$('#pClass').value, student_no:+$('#pNo').value, name:$('#pName').value.trim() };
+    const err = !p.grade ? '학년을 골라 주세요' : !(p.class_no >= 1 && p.class_no <= 30) ? '반을 확인해 주세요'
+              : !(p.student_no >= 1 && p.student_no <= 60) ? '번호를 확인해 주세요' : !p.name ? '이름을 적어 주세요' : '';
+    if (err) { $('#pErr').textContent = err; return; }
+    try { await api.saveProfile(p); state.profile = p; renderAuth(); $('#profileDlg').close(); toast('저장했어요'); refresh(); }
+    catch (e) { $('#pErr').textContent = e.message; }
+  };
+  $('#pLogout').onclick = async () => { $('#profileDlg').close(); await api.signOut(); };
+
+  $('#tabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; syncTabs(); load(); };
+  $('#dateInput').onchange = e => { state.date = e.target.value; load(); };
+  const shift = n => { const d = new Date(state.date + 'T12:00:00+09:00'); d.setDate(d.getDate() + n); state.date = seoulDate(d); $('#dateInput').value = state.date; load(); };
+  $('#prevDay').onclick = () => shift(-1); $('#nextDay').onclick = () => shift(1);
+
+  $('#list').onclick = async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const id = +b.closest('.post').dataset.id, act = b.dataset.act;
+    try {
+      if (act === 'like') {
+        if (!requireStudent()) return;
+        const r = await api.toggleLike(id);
+        const p = state.posts.find(p => p.id === id); p.liked_by_me = r.liked; p.like_count = r.like_count; renderList();
+      } else if (act === 'del') {
+        if (!confirm('내 메뉴를 삭제할까요?')) return;
+        await api.deleteMine(id); toast('삭제했어요'); load();
+      } else if (act === 'adopt') {
+        const p = state.posts.find(p => p.id === id);
+        await api.teacherAdopt(state.teacherPw, id, !p.adopted); toast(p.adopted ? '채택을 취소했어요' : '채택했어요 🏅'); load();
+      } else if (act === 'tdel') {
+        if (!confirm('이 메뉴를 삭제할까요?')) return;
+        await api.teacherDelete(state.teacherPw, id); toast('삭제했어요'); load();
+      }
+    } catch (err) { toast(err.message); }
+  };
+
+  /* 숨겨진 선생님 버튼: 로고를 2초 안에 5번 누르기 */
+  let taps = [];
+  $('#logo').onclick = () => {
+    const now = Date.now(); taps = taps.filter(t => now - t < 2000); taps.push(now);
+    if (taps.length >= 5) { taps = []; if (!state.teacherPw) { $('#tPw').value = ''; $('#tErr').textContent = ''; $('#teacherDlg').showModal(); setTimeout(() => $('#tPw').focus(), 50); } }
+  };
+  const tryTeacher = async () => {
+    const pw = $('#tPw').value; $('#tOk').disabled = true;
+    try {
+      if (await api.teacherLogin(pw)) { state.teacherPw = pw; document.body.classList.add('teacher'); $('#teacherDlg').close(); toast('선생님 모드'); refresh(); updateQDot(); }
+      else { $('#tErr').textContent = '비밀번호가 맞지 않아요'; const d = $('#teacherDlg'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake'); }
+    } catch (e) { $('#tErr').textContent = e.message; }
+    $('#tOk').disabled = false;
+  };
+  $('#tOk').onclick = tryTeacher;
+  $('#tPw').onkeydown = e => { if (e.key === 'Enter') tryTeacher(); };
+  $('#tExit').onclick = () => { state.teacherPw = null; document.body.classList.remove('teacher'); refresh(); updateQDot(); };
+  $('#tResetSoft').onclick = async () => {
+    if (!confirm('채택된 메뉴만 남기고 모두 지울까요?')) return;
+    try { const n = await api.teacherReset(state.teacherPw, true); toast(`${n}개를 지웠어요`); load(); } catch (e) { toast(e.message); }
+  };
+  $('#tResetAll').onclick = async () => {
+    if (!confirm('채택된 메뉴까지 전부 지워요. 되돌릴 수 없어요. 계속할까요?')) return;
+    try { const n = await api.teacherReset(state.teacherPw, false); toast(`${n}개를 지웠어요`); load(); } catch (e) { toast(e.message); }
+  };
+
+  /* 문의하기 */
+  document.querySelectorAll('nav.tabbar [data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+  $('#qBody').oninput = e => { $('#qLen').textContent = e.target.value.length; };
+  $('#qSend').onclick = async () => {
+    const body = $('#qBody').value.trim();
+    if (!body) { toast('문의 내용을 적어 주세요'); $('#qBody').focus(); return; }
+    if (!requireStudent()) return;
+    const b = $('#qSend'); b.disabled = true;
+    try { await api.createInquiry(body); $('#qBody').value = ''; $('#qLen').textContent = '0'; toast('문의를 보냈어요'); await loadQna(); }
+    catch (e) { toast(e.message); }
+    b.disabled = false;
+  };
+  $('#qTabs').onclick = e => {
+    const b = e.target.closest('[data-q]'); if (!b) return;
+    state.qTab = b.dataset.q;
+    document.querySelectorAll('#qTabs [data-q]').forEach(x => x.setAttribute('aria-selected', x === b));
+    loadQna();
+  };
+  $('#qList').onclick = async e => {
+    const b = e.target.closest('[data-qact]'); if (!b) return;
+    if (b.dataset.qact === 'login') { $('#loginDlg').showModal(); return; }
+    const item = b.closest('.q'), id = +item.dataset.id;
+    try {
+      if (b.dataset.qact === 'answer') {
+        const text = item.querySelector('textarea').value;
+        b.disabled = true;
+        await api.teacherAnswer(state.teacherPw, id, text);
+        toast(text.trim() ? '답변을 저장했어요' : '답변을 지웠어요'); await loadQna();
+      } else if (b.dataset.qact === 'tdel') {
+        if (!confirm('이 문의를 삭제할까요?')) return;
+        await api.teacherDeleteInquiry(state.teacherPw, id); toast('삭제했어요'); await loadQna();
+      } else if (b.dataset.qact === 'del') {
+        if (!confirm('내 문의를 삭제할까요?')) return;
+        await api.deleteMyInquiry(id); toast('삭제했어요'); await loadQna();
+      }
+    } catch (err) { toast(err.message); b.disabled = false; }
+  };
+
+  window.addEventListener('focus', () => refresh());
+  setInterval(() => {
+    if (document.hidden) return;
+    if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;   // 답변 쓰는 중엔 새로고침 안 함
+    refresh();
+  }, 30000);
+}
+
+function syncTabs(){
+  document.querySelectorAll('#tabs [data-tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === state.tab));
+  $('#datebar').classList.toggle('on', state.tab === 'date');
+  $('#dateInput').value = state.date;
+}
+
+(async function init(){
+  const live = CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY;
+  try { api = live ? await makeLiveBackend() : makeDemoBackend(); }
+  catch (e) { api = makeDemoBackend(); toast('서버 연결 실패 — 미리보기 모드로 실행해요'); }
+  $('#demoNote').hidden = api.live;
+  bind(); renderComposer(); syncTabs();
+  api.onAuthChange(async () => { await refreshUser(); refresh(); });
+  await refreshUser();
+  load();
+})();
+</script>
+</body>
+</html>
