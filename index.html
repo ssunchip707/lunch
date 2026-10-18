@@ -42,7 +42,7 @@
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:15;margin:0 -20px;padding:0 20px}
   .logo{width:34px;height:34px;border-radius:10px;border:0;background:var(--board);display:grid;place-items:center;flex:none;padding:0}
   .logo svg{width:22px;height:22px}
-  .appname{font-family:var(--head);font-size:19px;letter-spacing:0;color:var(--board)}
+  .appname{font-family:var(--head);font-size:19px;letter-spacing:0;color:var(--board);white-space:nowrap}
   .auth{margin-left:auto;display:flex;align-items:center;gap:4px}
   .chip{border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700;color:var(--ink-2);white-space:nowrap}
   .chip.primary{background:var(--board);color:#fff;padding:8px 14px}
@@ -269,6 +269,18 @@
   .stu .no{width:40px;font-weight:800;color:var(--leaf);flex:none}
   .stu .nm{font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
   .stu .cnt{font-size:13px;color:var(--ink-3);flex:none}
+  .stu{cursor:pointer;border-radius:0}
+  .stu:active{background:var(--steel-1)}
+  .stu .chev{color:var(--ink-4);font-size:18px;flex:none}
+  .stu.banned .nm{color:var(--ink-3);text-decoration:line-through}
+  .ban-note{display:flex;gap:10px;background:var(--red-soft);color:#9B1C20;border-radius:16px;padding:14px 16px;font-size:15px;line-height:1.55;margin-bottom:20px;font-weight:600}
+  .ban-note b{flex:none}
+  .ban-box{background:var(--red-soft);color:#9B1C20;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:600;margin-top:12px;line-height:1.5}
+  .sec-label{font-size:13px;font-weight:800;color:var(--ink-3);margin:22px 0 0}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #qrBox{display:grid;place-items:center;margin:14px auto 6px;background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:16px;width:min(300px,100%);aspect-ratio:1}
+  #qrBox svg{width:100%;height:auto;display:block}
+  .qr-url{text-align:center;font-family:var(--head);font-size:20px;color:var(--board);margin:8px 0 0;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -282,6 +294,9 @@
     </button>
     <span class="appname">급식 설문</span>
     <div class="auth" id="auth"></div>
+    <button class="iconbtn" id="qrBtn" aria-label="QR 코드 보기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 18v2.5"/></svg>
+    </button>
     <button class="iconbtn" id="shareBtn" aria-label="링크 공유">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>
     </button>
@@ -293,6 +308,7 @@
   </div>
   <main id="viewMenu">
   <div class="hero"><h1>급식 뭐 먹고 싶어요?</h1><p>빈 칸을 눌러 식판을 채우고, 친구들 메뉴엔 추천을 눌러 주세요</p></div>
+  <div class="ban-note" id="banNote" hidden><b>⛔</b><span id="banText"></span></div>
   <div class="notice" id="notice" hidden><b>📢</b><span id="noticeText"></span></div>
 
   <div class="demo" id="demoNote" hidden>
@@ -356,6 +372,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="stuSearch" type="search" maxlength="20" placeholder="이름 또는 반 검색 (예: 3반)" autocomplete="off">
     </div>
+    <div class="tabs" id="stuTabs">
+      <button data-st="all" aria-selected="true">전체</button>
+      <button data-st="banned" aria-selected="false">이용 제한</button>
+    </div>
     <div id="stuList"></div>
   </main>
   <footer>급식 메뉴 설문 · 학생 정보는 선생님만 볼 수 있어요 · <a href="privacy.html" style="color:inherit">개인정보처리방침</a></footer>
@@ -382,7 +402,7 @@
   <div class="field"><label class="l" for="pName">이름</label><input id="pName" maxlength="20" placeholder="홍길동" autocomplete="name"></div>
   <div class="err" id="pErr"></div>
   <button class="btn" id="pSave">저장하기</button>
-  <button class="btn ghost" id="pLogout">다른 계정으로 로그인</button>
+  <button class="btn ghost" id="pLogout">로그아웃</button>
 </dialog>
 
 <!-- 식판 칸 입력 -->
@@ -402,6 +422,44 @@
   <div class="err" id="tErr"></div>
   <button class="btn" id="tOk">들어가기</button>
   <button class="btn ghost" data-close>취소</button>
+</dialog>
+
+<!-- QR -->
+<dialog id="qrDlg">
+  <h3>QR 코드로 들어오기</h3>
+  <p class="sub">휴대폰 카메라로 찍으면 바로 이 사이트가 열려요.</p>
+  <div id="qrBox"></div>
+  <p class="qr-url" id="qrUrl"></p>
+  <button class="btn" id="qrSave">이미지로 저장</button>
+  <button class="btn ghost" data-close>닫기</button>
+</dialog>
+
+<!-- 학생 관리 (선생님) -->
+<dialog id="stuDlg">
+  <h3 id="sdTitle">학생 관리</h3>
+  <p class="sub" id="sdSub"></p>
+  <div class="ban-box" id="sdBanBox" hidden></div>
+  <p class="sec-label">학생 정보 수정</p>
+  <div class="row3">
+    <div class="field"><select id="sdGrade" aria-label="학년"></select></div>
+    <div class="field"><select id="sdClass" aria-label="반"></select></div>
+    <div class="field"><select id="sdNo" aria-label="번호"></select></div>
+  </div>
+  <div class="field"><input id="sdName" maxlength="20" placeholder="이름" aria-label="이름"></div>
+  <div class="err" id="sdErr"></div>
+  <button class="btn" id="sdSave">정보 저장</button>
+  <p class="sec-label">이용 제한</p>
+  <div id="sdBanForm">
+    <div class="field"><input id="sdReason" maxlength="100" placeholder="제한 사유 (학생에게 보여요) 예: 장난글 반복"></div>
+    <button class="btn red" id="sdBan">이용 제한하기</button>
+  </div>
+  <button class="btn ghost" id="sdUnban" hidden>제한 풀기</button>
+  <p class="sec-label">정리</p>
+  <div class="row2">
+    <button class="btn red" id="sdDelPosts">메뉴 모두 삭제</button>
+    <button class="btn red" id="sdRelease">등록 해제</button>
+  </div>
+  <button class="btn ghost" data-close>닫기</button>
 </dialog>
 
 <!-- 신고 -->
@@ -522,6 +580,11 @@ async function makeLiveBackend(){
     teacherClearReports: (pw, id) => rpc('teacher_clear_reports', { pw, p_post:id }),
     teacherStudents: pw => rpc('teacher_list_students', { pw }),
     teacherRelease: (pw, id) => rpc('teacher_release_student', { pw, p_id:id }),
+    myStatus: () => rpc('my_status'),
+    teacherUpdateStudent: (pw, id, p) => rpc('teacher_update_student', { pw, p_id:id, p_grade:p.grade, p_class:p.class_no, p_no:p.student_no, p_name:p.name }),
+    teacherBan: (pw, id, reason) => rpc('teacher_ban', { pw, p_id:id, p_reason:reason }),
+    teacherUnban: (pw, id) => rpc('teacher_unban', { pw, p_id:id }),
+    teacherDeleteStudentPosts: (pw, id) => rpc('teacher_delete_student_posts', { pw, p_id:id }),
     listPosts: o => rpc('list_posts', opts(o)),
     createPost: m => rpc('create_post', { p_rice:m.rice, p_soup:m.soup, p_main:m.main, p_side1:m.side1, p_side2:m.side2, p_dessert:m.dessert, p_comment:m.comment }),
     toggleLike: id => rpc('toggle_like', { p_post: id }),
@@ -568,6 +631,7 @@ function makeDemoBackend(){
   }
   if (!db.settings) db.settings = { notice: null, accepting: true };
   if (!db.reports) db.reports = [];
+  if (!db.bans) db.bans = {};
   const save = () => store.set(KEY, db);
   const count = id => db.likes.filter(l => l.post === id).length;
   const rcount = id => db.reports.filter(r => r.post === id).length;
@@ -581,7 +645,8 @@ function makeDemoBackend(){
     return rows;
   };
   const isT = async pw => (await sha256(pw || '')) === TEACHER_HASH;
-  const need = () => { if (!db.session) throw new Error('로그인이 필요해요'); if (!db.users[db.session]?.profile) throw new Error('학생 정보를 먼저 입력해 주세요'); };
+  const BANNED = '이용이 제한된 계정이에요. 선생님께 말씀해 주세요';
+  const need = () => { if (!db.session) throw new Error('로그인이 필요해요'); if (db.bans[db.session]) throw new Error(BANNED); if (!db.users[db.session]?.profile) throw new Error('학생 정보를 먼저 입력해 주세요'); };
   let authCb = () => {};
   return {
     live: false,
@@ -592,6 +657,7 @@ function makeDemoBackend(){
     async getProfile(){ return db.session ? db.users[db.session]?.profile || null : null; },
     async saveProfile(p){
       if (!db.session) throw new Error('로그인이 필요해요');
+      if (db.bans[db.session]) throw new Error(BANNED);
       const taken = Object.entries(db.users).some(([id, u]) => id !== db.session && u.profile
         && u.profile.grade === p.grade && u.profile.class_no === p.class_no && u.profile.student_no === p.student_no);
       if (taken) throw new Error('이미 다른 계정이 등록한 번호예요. 내 번호가 맞다면 선생님께 말씀해 주세요');
@@ -657,10 +723,28 @@ function makeDemoBackend(){
     async teacherClearReports(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.reports = db.reports.filter(r => r.post !== id); save(); },
     async teacherStudents(pw){
       if (!await isT(pw)) throw new Error('선생님 인증 실패');
-      return Object.entries(db.users).filter(([, u]) => u.profile).map(([id, u]) => ({ id, ...u.profile, post_count: db.posts.filter(p => p.user === id).length }))
-        .sort((a, b) => a.grade - b.grade || a.class_no - b.class_no || a.student_no - b.student_no);
+      return Object.entries(db.users).filter(([id, u]) => u.profile || db.bans[id]).map(([id, u]) => ({ id, ...(u.profile || {}),
+          post_count: db.posts.filter(p => p.user === id).length, inquiry_count: db.inquiries.filter(q => q.user === id).length,
+          banned: !!db.bans[id], ban_reason: db.bans[id]?.reason || null }))
+        .sort((a, b) => (a.grade || 99) - (b.grade || 99) || a.class_no - b.class_no || a.student_no - b.student_no);
     },
     async teacherRelease(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); delete db.users[id].profile; save(); },
+    async myStatus(){ const b = db.bans[db.session]; return { banned: !!b, reason: b ? b.reason : null }; },
+    async teacherUpdateStudent(pw, id, p){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      if (Object.entries(db.users).some(([uid, u]) => uid !== id && u.profile && u.profile.grade === p.grade && u.profile.class_no === p.class_no && u.profile.student_no === p.student_no))
+        throw new Error('같은 학년·반·번호로 등록된 다른 학생이 있어요');
+      if (!db.users[id]?.profile) throw new Error('학생 정보가 없어요');
+      db.users[id].profile = { ...p }; save();
+    },
+    async teacherBan(pw, id, reason){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.bans[id] = { reason: (reason || '').trim() || null }; save(); },
+    async teacherUnban(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); delete db.bans[id]; save(); },
+    async teacherDeleteStudentPosts(pw, id){
+      if (!await isT(pw)) throw new Error('선생님 인증 실패');
+      const before = db.posts.length; db.posts = db.posts.filter(p => p.user !== id);
+      const ids = new Set(db.posts.map(p => p.id)); db.likes = db.likes.filter(l => ids.has(l.post)); save();
+      return before - db.posts.length;
+    },
     async teacherAdopt(pw, id, v){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.posts.find(p => p.id === id).adopted = v; save(); },
     async teacherDelete(pw, id){ if (!await isT(pw)) throw new Error('선생님 인증 실패'); db.posts = db.posts.filter(p => p.id !== id); db.likes = db.likes.filter(l => l.post !== id); save(); },
     async teacherReset(pw, keep){
@@ -700,7 +784,7 @@ function makeDemoBackend(){
 
 /* ---------- 앱 ---------- */
 let api;
-const state = { settings:{ notice:null, accepting:true }, popular:[], q:'', students:[], reportId:null, view:'menu', qTab:'wait', inquiries:[], user:null, profile:null, tab:'likes', date: seoulDate(new Date()), teacherPw:null, posts:[],
+const state = { status:{ banned:false }, stuTab:'all', stuId:null, settings:{ notice:null, accepting:true }, popular:[], q:'', students:[], reportId:null, view:'menu', qTab:'wait', inquiries:[], user:null, profile:null, tab:'likes', date: seoulDate(new Date()), teacherPw:null, posts:[],
   draft: store.get('lunch-draft', {}) };
 
 function trayHTML(m, interactive){
@@ -720,16 +804,19 @@ function renderAuth(){
   const el = $('#auth');
   if (!state.user) { el.innerHTML = `<button class="chip primary" id="loginChip">로그인</button>`; $('#loginChip').onclick = () => $('#loginDlg').showModal(); return; }
   const label = state.profile ? `${state.profile.grade}학년 ${state.profile.class_no}반` : '정보 입력';
-  el.innerHTML = `<button class="chip" id="meChip">${label}</button><button class="chip" id="outChip">로그아웃</button>`;
+  el.innerHTML = `<button class="chip" id="meChip">${label}</button>`;
   $('#meChip').onclick = openProfile;
-  $('#outChip').onclick = async () => { await api.signOut(); toast('로그아웃했어요'); };
 }
 
 async function refreshUser(){
   state.user = await api.getUser();
   state.profile = state.user ? await api.getProfile().catch(() => null) : null;
+  state.status = state.user ? await api.myStatus().catch(() => ({ banned:false })) : { banned:false };
   renderAuth();
-  if (state.user && !state.profile) openProfile();
+  $('#banNote').hidden = !state.status.banned;
+  $('#banText').textContent = state.status.banned
+    ? `이용이 제한된 계정이에요${state.status.reason ? ` (사유: ${state.status.reason})` : ''}. 메뉴 올리기·추천·문의를 할 수 없어요. 선생님께 말씀해 주세요.` : '';
+  if (state.user && !state.profile && !state.status.banned) openProfile();
 }
 
 function requireStudent(){
@@ -821,9 +908,11 @@ function commitSlot(v){ state.draft[editing.key] = v.trim(); saveDraft(); render
 /* ---------- 학생 정보 ---------- */
 function fillSelects(){
   const opts = (n, unit) => '<option value="">선택</option>' + Array.from({ length: n }, (_, i) => `<option value="${i + 1}">${i + 1}${unit}</option>`).join('');
-  $('#pGrade').innerHTML = opts(CONFIG.GRADES, '학년');
-  $('#pClass').innerHTML = opts(CONFIG.CLASSES, '반');
-  $('#pNo').innerHTML = opts(CONFIG.NUMBERS, '번');
+  ['p', 'sd'].forEach(k => {
+    $(`#${k}Grade`).innerHTML = opts(CONFIG.GRADES, '학년');
+    $(`#${k}Class`).innerHTML = opts(CONFIG.CLASSES, '반');
+    $(`#${k}No`).innerHTML = opts(CONFIG.NUMBERS, '번');
+  });
 }
 function openProfile(){
   const p = state.profile || {};
@@ -862,17 +951,43 @@ async function loadStudents(){
 }
 function renderStudents(){
   const q = norm($('#stuSearch').value);
-  const rows = state.students.filter(s => !q || norm(`${s.grade}학년${s.class_no}반${s.student_no}번${s.name}`).includes(q));
-  $('#stuSub').textContent = `등록한 학생 ${state.students.length}명 · 번호를 잘못 등록했다면 '등록 해제'해 주세요`;
-  if (!rows.length) { $('#stuList').innerHTML = `<div class="empty">${state.students.length ? '찾는 학생이 없어요' : '아직 등록한 학생이 없어요'}</div>`; return; }
-  let html = '', group = '';
+  const nBan = state.students.filter(s => s.banned).length;
+  const rows = state.students.filter(s => (state.stuTab !== 'banned' || s.banned)
+    && (!q || norm(`${s.grade || ''}학년${s.class_no || ''}반${s.student_no || ''}번${s.name || ''}`).includes(q)));
+  $('#stuSub').textContent = `등록한 학생 ${state.students.filter(s => s.name).length}명${nBan ? ` · 이용 제한 ${nBan}명` : ''} · 학생을 누르면 수정·제한할 수 있어요`;
+  document.querySelectorAll('#stuTabs [data-st]').forEach(b => b.setAttribute('aria-selected', b.dataset.st === state.stuTab));
+  if (!rows.length) { $('#stuList').innerHTML = `<div class="empty">${state.stuTab === 'banned' ? '이용 제한된 학생이 없어요' : state.students.length ? '찾는 학생이 없어요' : '아직 등록한 학생이 없어요'}</div>`; return; }
+  let html = '', group = null;
   rows.forEach(s => {
-    const g = `${s.grade}학년 ${s.class_no}반`;
+    const g = s.grade ? `${s.grade}학년 ${s.class_no}반` : '정보 없음 (등록 해제된 계정)';
     if (g !== group) { group = g; html += `<div class="stu-group">${g}</div>`; }
-    html += `<div class="stu" data-id="${esc(s.id)}"><span class="no">${s.student_no}번</span><span class="nm">${esc(s.name)}</span>
-      <span class="cnt">메뉴 ${s.post_count}개</span><button class="small" data-sact="release">등록 해제</button></div>`;
+    html += `<div class="stu${s.banned ? ' banned' : ''}" data-id="${esc(s.id)}" role="button" tabindex="0">
+      <span class="no">${s.student_no ? s.student_no + '번' : '–'}</span><span class="nm">${esc(s.name || '이름 없음')}</span>
+      ${s.banned ? '<span class="badge warn">제한</span>' : ''}<span class="cnt">메뉴 ${s.post_count}</span><span class="chev">›</span></div>`;
   });
   $('#stuList').innerHTML = html;
+}
+
+function openStudent(id){
+  const s = state.students.find(x => String(x.id) === String(id)); if (!s) return;
+  state.stuId = s.id;
+  $('#sdTitle').textContent = s.name ? `${s.name} 학생` : '이름 없는 계정';
+  $('#sdSub').textContent = [s.grade ? `${s.grade}학년 ${s.class_no}반 ${s.student_no}번` : '학생 정보 없음',
+    `메뉴 ${s.post_count}개`, `문의 ${s.inquiry_count ?? 0}개`].join(' · ');
+  $('#sdGrade').value = s.grade || ''; $('#sdClass').value = s.class_no || ''; $('#sdNo').value = s.student_no || ''; $('#sdName').value = s.name || '';
+  const hasProfile = !!s.name;
+  ['#sdGrade', '#sdClass', '#sdNo', '#sdName', '#sdSave', '#sdRelease'].forEach(k => $(k).disabled = !hasProfile);
+  $('#sdErr').textContent = hasProfile ? '' : '학생 정보가 없는 계정이라 수정할 수 없어요.';
+  $('#sdBanBox').hidden = !s.banned;
+  $('#sdBanBox').textContent = s.banned ? `이용 제한 중이에요${s.ban_reason ? ` · 사유: ${s.ban_reason}` : ''}` : '';
+  $('#sdBanForm').hidden = s.banned; $('#sdUnban').hidden = !s.banned;
+  $('#sdReason').value = '';
+  $('#sdDelPosts').disabled = !s.post_count;
+  if (!$('#stuDlg').open) $('#stuDlg').showModal();
+}
+async function reloadStudent(){
+  await loadStudents();
+  if (state.stuId && $('#stuDlg').open) openStudent(state.stuId);
 }
 
 async function loadQna(){
@@ -964,7 +1079,7 @@ function bind(){
     catch (e) { $('#pErr').textContent = e.message; }
     b.disabled = false;
   };
-  $('#pLogout').onclick = async () => { $('#profileDlg').close(); await api.signOut(); };
+  $('#pLogout').onclick = async () => { $('#profileDlg').close(); await api.signOut(); toast('로그아웃했어요'); };
 
   $('#tabs').onclick = e => {
     const b = e.target.closest('[data-tab]'); if (!b) return;
@@ -1081,11 +1196,54 @@ function bind(){
     try { const n = await api.teacherReset(state.teacherPw, false); $('#settingsDlg').close(); toast(`${n}개를 지웠어요`); refresh(); } catch (e) { toast(e.message); }
   };
   $('#stuSearch').oninput = renderStudents;
-  $('#stuList').onclick = async e => {
-    const b = e.target.closest('[data-sact]'); if (!b) return;
-    const row = b.closest('.stu'), s = state.students.find(x => String(x.id) === row.dataset.id);
-    if (!confirm(`${s.grade}학년 ${s.class_no}반 ${s.student_no}번 ${s.name} 학생의 등록을 해제할까요?\n올린 메뉴는 남고, 학생은 다음에 들어올 때 정보를 다시 입력해요.`)) return;
-    try { await api.teacherRelease(state.teacherPw, s.id); toast('등록을 해제했어요'); loadStudents(); } catch (err) { toast(err.message); }
+  $('#stuList').onclick = e => { const r = e.target.closest('.stu'); if (r) openStudent(r.dataset.id); };
+  $('#stuList').onkeydown = e => { const r = e.target.closest('.stu'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openStudent(r.dataset.id); } };
+  $('#stuTabs').onclick = e => { const b = e.target.closest('[data-st]'); if (!b) return; state.stuTab = b.dataset.st; renderStudents(); };
+  const cur = () => state.students.find(x => x.id === state.stuId);
+  const who = s => s.name ? `${s.grade}학년 ${s.class_no}반 ${s.student_no}번 ${s.name}` : '이 계정';
+  $('#sdSave').onclick = async () => {
+    const p = { grade:+$('#sdGrade').value, class_no:+$('#sdClass').value, student_no:+$('#sdNo').value, name:$('#sdName').value.trim() };
+    const err = !p.grade ? '학년을 골라 주세요' : !p.class_no ? '반을 골라 주세요' : !p.student_no ? '번호를 골라 주세요' : !p.name ? '이름을 적어 주세요' : '';
+    if (err) { $('#sdErr').textContent = err; return; }
+    try { await api.teacherUpdateStudent(state.teacherPw, state.stuId, p); toast('학생 정보를 바꿨어요'); await reloadStudent(); }
+    catch (e) { $('#sdErr').textContent = e.message; }
+  };
+  $('#sdBan').onclick = async () => {
+    const s = cur(); if (!confirm(`${who(s)} 학생의 이용을 제한할까요?\n메뉴 올리기·추천·신고·문의를 할 수 없게 돼요.`)) return;
+    try { await api.teacherBan(state.teacherPw, s.id, $('#sdReason').value); toast('이용을 제한했어요'); await reloadStudent(); } catch (e) { toast(e.message); }
+  };
+  $('#sdUnban').onclick = async () => {
+    try { await api.teacherUnban(state.teacherPw, state.stuId); toast('제한을 풀었어요'); await reloadStudent(); } catch (e) { toast(e.message); }
+  };
+  $('#sdDelPosts').onclick = async () => {
+    const s = cur(); if (!confirm(`${who(s)} 학생이 올린 메뉴 ${s.post_count}개를 모두 지울까요? 되돌릴 수 없어요.`)) return;
+    try { const n = await api.teacherDeleteStudentPosts(state.teacherPw, s.id); toast(`메뉴 ${n}개를 지웠어요`); await reloadStudent(); loadMeta(); } catch (e) { toast(e.message); }
+  };
+  $('#sdRelease').onclick = async () => {
+    const s = cur(); if (!confirm(`${who(s)} 학생의 등록을 해제할까요?\n올린 메뉴는 남고, 학생은 다음에 들어올 때 정보를 다시 입력해요.`)) return;
+    try { await api.teacherRelease(state.teacherPw, s.id); toast('등록을 해제했어요'); $('#stuDlg').close(); state.stuId = null; loadStudents(); } catch (e) { toast(e.message); }
+  };
+
+  /* QR 코드 (https://gimpogo.kro.kr/ — 사이트 안에 직접 들어 있어서 인터넷 상태와 상관없이 떠요) */
+  const QR_URL = 'https://gimpogo.kro.kr/';
+  const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 37 37" shape-rendering="crispEdges"><rect width="37" height="37" fill="#fff"/><path fill="#1F3D33" d="M4 4h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1zM7 4h1v1h-1zM8 4h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM13 4h1v1h-1zM16 4h1v1h-1zM17 4h1v1h-1zM18 4h1v1h-1zM20 4h1v1h-1zM21 4h1v1h-1zM22 4h1v1h-1zM23 4h1v1h-1zM24 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM28 4h1v1h-1zM29 4h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM32 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM14 5h1v1h-1zM15 5h1v1h-1zM16 5h1v1h-1zM17 5h1v1h-1zM19 5h1v1h-1zM23 5h1v1h-1zM26 5h1v1h-1zM32 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM7 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM14 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM21 6h1v1h-1zM22 6h1v1h-1zM23 6h1v1h-1zM24 6h1v1h-1zM26 6h1v1h-1zM28 6h1v1h-1zM29 6h1v1h-1zM30 6h1v1h-1zM32 6h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM13 7h1v1h-1zM14 7h1v1h-1zM15 7h1v1h-1zM16 7h1v1h-1zM22 7h1v1h-1zM23 7h1v1h-1zM26 7h1v1h-1zM28 7h1v1h-1zM29 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM7 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM17 8h1v1h-1zM18 8h1v1h-1zM21 8h1v1h-1zM26 8h1v1h-1zM28 8h1v1h-1zM29 8h1v1h-1zM30 8h1v1h-1zM32 8h1v1h-1zM4 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM17 9h1v1h-1zM20 9h1v1h-1zM21 9h1v1h-1zM23 9h1v1h-1zM26 9h1v1h-1zM32 9h1v1h-1zM4 10h1v1h-1zM5 10h1v1h-1zM6 10h1v1h-1zM7 10h1v1h-1zM8 10h1v1h-1zM9 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM18 10h1v1h-1zM20 10h1v1h-1zM22 10h1v1h-1zM24 10h1v1h-1zM26 10h1v1h-1zM27 10h1v1h-1zM28 10h1v1h-1zM29 10h1v1h-1zM30 10h1v1h-1zM31 10h1v1h-1zM32 10h1v1h-1zM12 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM17 11h1v1h-1zM18 11h1v1h-1zM20 11h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM10 12h1v1h-1zM11 12h1v1h-1zM14 12h1v1h-1zM18 12h1v1h-1zM19 12h1v1h-1zM24 12h1v1h-1zM26 12h1v1h-1zM27 12h1v1h-1zM31 12h1v1h-1zM4 13h1v1h-1zM5 13h1v1h-1zM6 13h1v1h-1zM7 13h1v1h-1zM9 13h1v1h-1zM12 13h1v1h-1zM15 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM19 13h1v1h-1zM20 13h1v1h-1zM22 13h1v1h-1zM24 13h1v1h-1zM26 13h1v1h-1zM27 13h1v1h-1zM28 13h1v1h-1zM30 13h1v1h-1zM31 13h1v1h-1zM32 13h1v1h-1zM5 14h1v1h-1zM8 14h1v1h-1zM10 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM17 14h1v1h-1zM18 14h1v1h-1zM19 14h1v1h-1zM20 14h1v1h-1zM25 14h1v1h-1zM27 14h1v1h-1zM28 14h1v1h-1zM29 14h1v1h-1zM30 14h1v1h-1zM32 14h1v1h-1zM4 15h1v1h-1zM6 15h1v1h-1zM7 15h1v1h-1zM8 15h1v1h-1zM9 15h1v1h-1zM11 15h1v1h-1zM15 15h1v1h-1zM16 15h1v1h-1zM17 15h1v1h-1zM19 15h1v1h-1zM20 15h1v1h-1zM21 15h1v1h-1zM22 15h1v1h-1zM23 15h1v1h-1zM25 15h1v1h-1zM27 15h1v1h-1zM29 15h1v1h-1zM31 15h1v1h-1zM32 15h1v1h-1zM4 16h1v1h-1zM7 16h1v1h-1zM9 16h1v1h-1zM10 16h1v1h-1zM13 16h1v1h-1zM14 16h1v1h-1zM15 16h1v1h-1zM16 16h1v1h-1zM20 16h1v1h-1zM22 16h1v1h-1zM23 16h1v1h-1zM24 16h1v1h-1zM27 16h1v1h-1zM29 16h1v1h-1zM32 16h1v1h-1zM4 17h1v1h-1zM6 17h1v1h-1zM7 17h1v1h-1zM9 17h1v1h-1zM11 17h1v1h-1zM13 17h1v1h-1zM14 17h1v1h-1zM15 17h1v1h-1zM16 17h1v1h-1zM17 17h1v1h-1zM19 17h1v1h-1zM20 17h1v1h-1zM26 17h1v1h-1zM28 17h1v1h-1zM30 17h1v1h-1zM32 17h1v1h-1zM4 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM14 18h1v1h-1zM16 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM19 18h1v1h-1zM20 18h1v1h-1zM21 18h1v1h-1zM24 18h1v1h-1zM28 18h1v1h-1zM32 18h1v1h-1zM4 19h1v1h-1zM7 19h1v1h-1zM9 19h1v1h-1zM12 19h1v1h-1zM13 19h1v1h-1zM14 19h1v1h-1zM15 19h1v1h-1zM16 19h1v1h-1zM17 19h1v1h-1zM21 19h1v1h-1zM22 19h1v1h-1zM23 19h1v1h-1zM24 19h1v1h-1zM27 19h1v1h-1zM29 19h1v1h-1zM5 20h1v1h-1zM7 20h1v1h-1zM9 20h1v1h-1zM10 20h1v1h-1zM11 20h1v1h-1zM12 20h1v1h-1zM15 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM20 20h1v1h-1zM21 20h1v1h-1zM23 20h1v1h-1zM27 20h1v1h-1zM31 20h1v1h-1zM32 20h1v1h-1zM4 21h1v1h-1zM7 21h1v1h-1zM8 21h1v1h-1zM9 21h1v1h-1zM11 21h1v1h-1zM12 21h1v1h-1zM14 21h1v1h-1zM15 21h1v1h-1zM18 21h1v1h-1zM20 21h1v1h-1zM21 21h1v1h-1zM26 21h1v1h-1zM27 21h1v1h-1zM28 21h1v1h-1zM32 21h1v1h-1zM7 22h1v1h-1zM9 22h1v1h-1zM10 22h1v1h-1zM12 22h1v1h-1zM17 22h1v1h-1zM21 22h1v1h-1zM22 22h1v1h-1zM24 22h1v1h-1zM28 22h1v1h-1zM29 22h1v1h-1zM30 22h1v1h-1zM32 22h1v1h-1zM6 23h1v1h-1zM7 23h1v1h-1zM13 23h1v1h-1zM14 23h1v1h-1zM15 23h1v1h-1zM16 23h1v1h-1zM23 23h1v1h-1zM27 23h1v1h-1zM28 23h1v1h-1zM4 24h1v1h-1zM5 24h1v1h-1zM8 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM13 24h1v1h-1zM17 24h1v1h-1zM22 24h1v1h-1zM24 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM27 24h1v1h-1zM28 24h1v1h-1zM29 24h1v1h-1zM31 24h1v1h-1zM12 25h1v1h-1zM13 25h1v1h-1zM14 25h1v1h-1zM15 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM20 25h1v1h-1zM21 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM28 25h1v1h-1zM30 25h1v1h-1zM32 25h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM6 26h1v1h-1zM7 26h1v1h-1zM8 26h1v1h-1zM9 26h1v1h-1zM10 26h1v1h-1zM12 26h1v1h-1zM13 26h1v1h-1zM15 26h1v1h-1zM16 26h1v1h-1zM18 26h1v1h-1zM20 26h1v1h-1zM22 26h1v1h-1zM23 26h1v1h-1zM24 26h1v1h-1zM26 26h1v1h-1zM28 26h1v1h-1zM32 26h1v1h-1zM4 27h1v1h-1zM10 27h1v1h-1zM12 27h1v1h-1zM16 27h1v1h-1zM17 27h1v1h-1zM19 27h1v1h-1zM22 27h1v1h-1zM23 27h1v1h-1zM24 27h1v1h-1zM28 27h1v1h-1zM29 27h1v1h-1zM31 27h1v1h-1zM32 27h1v1h-1zM4 28h1v1h-1zM6 28h1v1h-1zM7 28h1v1h-1zM8 28h1v1h-1zM10 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM15 28h1v1h-1zM19 28h1v1h-1zM20 28h1v1h-1zM21 28h1v1h-1zM22 28h1v1h-1zM23 28h1v1h-1zM24 28h1v1h-1zM25 28h1v1h-1zM26 28h1v1h-1zM27 28h1v1h-1zM28 28h1v1h-1zM4 29h1v1h-1zM6 29h1v1h-1zM7 29h1v1h-1zM8 29h1v1h-1zM10 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM15 29h1v1h-1zM16 29h1v1h-1zM19 29h1v1h-1zM20 29h1v1h-1zM22 29h1v1h-1zM27 29h1v1h-1zM31 29h1v1h-1zM4 30h1v1h-1zM6 30h1v1h-1zM7 30h1v1h-1zM8 30h1v1h-1zM10 30h1v1h-1zM14 30h1v1h-1zM19 30h1v1h-1zM23 30h1v1h-1zM24 30h1v1h-1zM25 30h1v1h-1zM30 30h1v1h-1zM31 30h1v1h-1zM32 30h1v1h-1zM4 31h1v1h-1zM10 31h1v1h-1zM14 31h1v1h-1zM15 31h1v1h-1zM18 31h1v1h-1zM20 31h1v1h-1zM21 31h1v1h-1zM22 31h1v1h-1zM24 31h1v1h-1zM27 31h1v1h-1zM29 31h1v1h-1zM31 31h1v1h-1zM32 31h1v1h-1zM4 32h1v1h-1zM5 32h1v1h-1zM6 32h1v1h-1zM7 32h1v1h-1zM8 32h1v1h-1zM9 32h1v1h-1zM10 32h1v1h-1zM16 32h1v1h-1zM17 32h1v1h-1zM18 32h1v1h-1zM21 32h1v1h-1zM22 32h1v1h-1zM24 32h1v1h-1zM26 32h1v1h-1zM28 32h1v1h-1zM29 32h1v1h-1zM31 32h1v1h-1z"/></svg>';
+  $('#qrBtn').onclick = () => {
+    $('#qrUrl').textContent = QR_URL.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    $('#qrBox').innerHTML = QR_SVG.replace('<svg ', '<svg role="img" aria-label="QR 코드: ' + QR_URL + '" width="100%" ');
+    $('#qrDlg').showModal();
+  };
+  $('#qrSave').onclick = () => {
+    const img = new Image(), size = 1100;
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = size; cv.height = size + 170;
+      const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+      g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, size, size);
+      g.fillStyle = '#17251F'; g.textAlign = 'center'; g.font = '800 64px Pretendard, sans-serif';
+      g.fillText('급식 뭐 먹고 싶어요?', size / 2, size + 70);
+      g.fillStyle = '#4A5A53'; g.font = '500 40px Pretendard, sans-serif'; g.fillText('gimpogo.kro.kr', size / 2, size + 130);
+      const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = '급식설문-QR.png'; a.click();
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(QR_SVG);
   };
 
   /* 문의하기 */
