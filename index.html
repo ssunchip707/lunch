@@ -543,7 +543,7 @@ function ago(iso){
   const d = new Date(iso);
   return new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric'}).format(d);
 }
-const BAD_WORDS = /(시발|씨발|씨빨|씨바|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|개새끼|개색|좆|존나|졸라|지랄|ㅈㄹ|니애미|느금|닥쳐|fuck|shit|bitch)/;
+const BAD_WORDS = /(시발|씨발|씨빨|씨바|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|개새끼|개색|좆|ㅈ|존나|졸라|지랄|ㅈㄹ|니애미|느금|닥쳐|fuck|shit|bitch)/;
 const hasBad = t => BAD_WORDS.test(String(t || '').toLowerCase().replace(/[\s\p{P}\p{S}0-9]/gu, ''));
 const norm = t => String(t || '').toLowerCase().replace(/\s/g, '');
 async function sha256(s){
