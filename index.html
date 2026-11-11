@@ -383,10 +383,9 @@
 
 <!-- 로그인 -->
 <dialog id="loginDlg">
-  <h3>로그인하고 참여하기</h3>
-  <p class="sub">메뉴를 올리거나 추천하려면 내 계정으로 로그인해 주세요.</p>
-  <button class="login-btn google" data-provider="google"><i>G</i>구글로 로그인</button>
-  <button class="login-btn kakao" data-provider="kakao"><i>K</i>카카오로 로그인</button>
+  <h3>학교 계정으로 로그인</h3>
+  <p class="sub">메뉴를 올리거나 추천하려면 <b>@goedu.kr</b> 학교 구글 계정으로 로그인해 주세요. 개인 계정(gmail 등)은 쓸 수 없어요.</p>
+  <button class="login-btn google" data-provider="google"><i>G</i>학교 구글 계정으로 로그인</button>
   <button class="btn ghost" data-close>닫기</button>
 </dialog>
 
@@ -527,8 +526,7 @@
 const CONFIG = {
   SUPABASE_URL: 'https://ygdthdqkqkfewgptavny.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_uZ-Tmna5KdZeCXJWN3jDSg_UIhOPBh7',
-  NAVER_PROVIDER: 'custom:naver',  // Supabase에 만든 네이버 커스텀 제공자 ID
-  SHOW_NAVER: false,
+  SCHOOL_DOMAIN: 'goedu.kr',   // 이 도메인의 구글 계정만 로그인 허용
   GRADES: 3,     // 학년 수
   CLASSES: 11,   // 반 수
   NUMBERS: 32,   // 번호 끝
@@ -578,11 +576,12 @@ async function makeLiveBackend(){
   const topts = o => ({ p_sort:o.sort, p_date:o.date || null, p_adopted_only:!!o.adopted, p_q:o.q || null, p_reported_only:!!o.reported });
   return {
     live: true,
-    async getUser(){ const { data:{ session } } = await sb.auth.getSession(); return session ? { id: session.user.id } : null; },
+    async getUser(){ const { data:{ session } } = await sb.auth.getSession(); return session ? { id: session.user.id, email: session.user.email || '' } : null; },
     onAuthChange(cb){ sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') cb(); }); },
     async signIn(provider){
-      const p = provider === 'naver' ? CONFIG.NAVER_PROVIDER : provider;
-      ok(await sb.auth.signInWithOAuth({ provider: p, options: { redirectTo: location.origin + location.pathname } }));
+      ok(await sb.auth.signInWithOAuth({ provider: 'google', options: {
+        redirectTo: location.origin + location.pathname,
+        queryParams: { hd: CONFIG.SCHOOL_DOMAIN, prompt: 'select_account' } } }));
     },
     async signOut(){ await sb.auth.signOut(); },
     async getProfile(){
@@ -668,7 +667,7 @@ function makeDemoBackend(){
   let authCb = () => {};
   return {
     live: false,
-    async getUser(){ return db.session ? { id: db.session } : null; },
+    async getUser(){ return db.session ? { id: db.session, email: db.users[db.session]?.email || `demo@${CONFIG.SCHOOL_DOMAIN}` } : null; },
     onAuthChange(cb){ authCb = cb; },
     async signIn(provider){ const id = provider + '-' + Math.random().toString(36).slice(2,8); db.users[id] = { provider }; db.session = id; save(); authCb(); },
     async signOut(){ db.session = null; save(); authCb(); },
@@ -833,6 +832,11 @@ function renderAuth(){
 
 async function refreshUser(){
   state.user = await api.getUser();
+  if (state.user && !String(state.user.email).toLowerCase().endsWith('@' + CONFIG.SCHOOL_DOMAIN)) {
+    await api.signOut().catch(() => {});
+    state.user = null;
+    toast(`학교 구글 계정(@${CONFIG.SCHOOL_DOMAIN})으로 로그인해 주세요`);
+  }
   state.profile = state.user ? await api.getProfile().catch(() => null) : null;
   state.status = state.user ? await api.myStatus().catch(() => ({ banned:false })) : { banned:false };
   renderAuth();
@@ -1336,6 +1340,12 @@ function syncTabs(){
   catch (e) { api = makeDemoBackend(); toast('서버 연결 실패 — 미리보기 모드로 실행해요'); }
   $('#demoNote').hidden = api.live;
   fillSelects(); bind(); renderComposer(); syncTabs();
+  const params = new URLSearchParams(location.hash.slice(1) + '&' + location.search.slice(1));
+  if (params.get('error')) {
+    const d = params.get('error_description') || '';
+    toast(/database error|goedu/i.test(d) ? `학교 구글 계정(@${CONFIG.SCHOOL_DOMAIN})만 로그인할 수 있어요` : '로그인하지 못했어요. 다시 시도해 주세요');
+    history.replaceState(null, '', location.pathname);
+  }
   api.onAuthChange(async () => { await refreshUser(); refresh(); });
   await refreshUser();
   refresh();
